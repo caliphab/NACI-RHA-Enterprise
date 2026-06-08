@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="main-image mb-3">
+                <img src="{{ url_for('static', filename='uploads/' + (product.images[0].image_url if product.images else 'placeholder.png')) }}" class="img-fluid rounded" alt="{{ product.name }}" id="mainProductImage">
+            </div>
+            <div class="thumbnail-images d-flex gap-2">
+                {% for image in product.images %}
+                <img src="{{ url_for('static', filename='uploads/' + image.image_url) }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer;" onclick="changeMainImage(this.src)">
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <h2>{{ product.name }}</h2>
+            <div class="rating mb-3">
+                {% for i in range(5) %}
+                    {% if i < product.rating|int %}
+                    <i class="fas fa-star text-warning"></i>
+                    {% else %}
+                    <i class="far fa-star text-warning"></i>
+                    {% endif %}
+                {% endfor %}
+                <span class="ms-2">({{ product.rating_count }} reviews)</span>
+            </div>
+            
+            <div class="price mb-3">
+                {% if product.discount_percent > 0 %}
+                <span class="h2 text-danger">₦{{ "%.2f"|format(product.final_price) }}</span>
+                <span class="text-muted text-decoration-line-through ms-2">₦{{ "%.2f"|format(product.price) }}</span>
+                <span class="badge bg-danger ms-2">Save {{ product.discount_percent }}%</span>
+                {% else %}
+                <span class="h2 text-primary">₦{{ "%.2f"|format(product.price) }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="stock mb-3">
+                {% if product.in_stock %}
+                <span class="badge bg-success">In Stock ({{ product.stock }} available)</span>
+                {% else %}
+                <span class="badge bg-danger">Out of Stock</span>
+                {% endif %}
+            </div>
+            
+            <div class="brand mb-3">
+                <strong>Brand:</strong> {{ product.brand or 'NAC-HEERAH' }}
+            </div>
+            
+            <div class="description mb-4">
+                <h5>Description</h5>
+                <p>{{ product.description }}</p>
+            </div>
+            
+            {% if product.in_stock %}
+            <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="post">
+                <div class="row g-3 mb-3">
+                    <div class="col-auto">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="{{ product.stock }}" style="width: 100px;">
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary btn-lg mt-4">Add to Cart <i class="fas fa-shopping-cart"></i></button>
+                    </div>
+                    <div class="col-auto">
+                        <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn btn-outline-danger btn-lg mt-4">
+                            <i class="{% if in_wishlist %}fas{% else %}far{% endif %} fa-heart"></i> Wishlist
+                        </a>
+                    </div>
+                </div>
+            </form>
+            {% endif %}
+            
+            <div class="delivery-info mt-4 p-3 bg-light rounded">
+                <h6><i class="fas fa-truck"></i> Delivery Information</h6>
+                <p class="mb-1">✓ Free delivery on orders over ₦50,000</p>
+                <p class="mb-1">✓ Standard delivery: 3-5 business days</p>
+                <p>✓ Express delivery: 1-2 business days</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4>Customer Reviews</h4>
+            {% if current_user.is_authenticated %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5>Write a Review</h5>
+                    <form action="{{ url_for('add_review', product_id=product.id) }}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <div class="rating-input">
+                                <i class="far fa-star" data-rating="1"></i>
+                                <i class="far fa-star" data-rating="2"></i>
+                                <i class="far fa-star" data-rating="3"></i>
+                                <i class="far fa-star" data-rating="4"></i>
+                                <i class="far fa-star" data-rating="5"></i>
+                                <input type="hidden" name="rating" id="ratingValue" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <textarea name="comment" class="form-control" rows="3" placeholder="Write your review..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% for review in reviews %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ review.user.full_name }}</strong>
+                        <small class="text-muted">{{ review.created_at.strftime('%B %d, %Y') }}</small>
+                    </div>
+                    <div class="rating mb-2">
+                        {% for i in range(5) %}
+                            {% if i < review.rating %}
+                            <i class="fas fa-star text-warning"></i>
+                            {% else %}
+                            <i class="far fa-star text-warning"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p>{{ review.comment }}</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted">No reviews yet. Be the first to review this product!</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    {% if related_products %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4>Related Products</h4>
+            <div class="row g-4">
+                {% for product in related_products %}
+                <div class="col-md-3">
+                    <div class="card h-100">
+                        <img src="{{ url_for('static', filename='uploads/' + (product.images[0].image_url if product.images else 'placeholder.png')) }}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ product.name[:40] }}</h6>
+                            <div class="price">₦{{ "%.2f"|format(product.price) }}</div>
+                            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-sm btn-primary w-100">View</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function changeMainImage(src) {
+    document.getElementById('mainProductImage').src = src;
+}
+
+document.querySelectorAll('.rating-input i').forEach(star => {
+    star.addEventListener('click', function() {
+        const rating = this.dataset.rating;
+        document.getElementById('ratingValue').value = rating;
+        
+        document.querySelectorAll('.rating-input i').forEach(s => {
+            if(s.dataset.rating <= rating) {
+                s.classList.remove('far');
+                s.classList.add('fas');
+            } else {
+                s.classList.remove('fas');
+                s.classList.add('far');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

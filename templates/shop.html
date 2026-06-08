@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Shop - All Products{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{{ url_for('shop') }}">
+                        <div class="mb-3">
+                            <label class="form-label">Categories</label>
+                            <select name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if request.args.get('category')|int == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Brand</label>
+                            <select name="brand" class="form-select">
+                                <option value="">All Brands</option>
+                                {% for brand in brands %}
+                                <option value="{{ brand[0] }}" {% if request.args.get('brand') == brand[0] %}selected{% endif %}>
+                                    {{ brand[0] }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Price Range</label>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="number" name="min_price" class="form-control" placeholder="Min" value="{{ request.args.get('min_price', '') }}">
+                                </div>
+                                <div class="col">
+                                    <input type="number" name="max_price" class="form-control" placeholder="Max" value="{{ request.args.get('max_price', '') }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Sort By</label>
+                            <select name="sort" class="form-select">
+                                <option value="newest" {% if request.args.get('sort') == 'newest' %}selected{% endif %}>Newest First</option>
+                                <option value="price_low" {% if request.args.get('sort') == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if request.args.get('sort') == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                                <option value="rating" {% if request.args.get('sort') == 'rating' %}selected{% endif %}>Highest Rated</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        <a href="{{ url_for('shop') }}" class="btn btn-secondary w-100 mt-2">Reset</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="row mb-3">
+                <div class="col">
+                    <h4>Products ({{ products|length }})</h4>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                {% for product in products %}
+                <div class="col-md-4 col-sm-6">
+                    <div class="card product-card h-100">
+                        {% if product.discount_percent > 0 %}
+                        <span class="discount-badge">-{{ product.discount_percent }}%</span>
+                        {% endif %}
+                        <img src="{{ url_for('static', filename='uploads/' + (product.images[0].image_url if product.images else 'placeholder.png')) }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ product.name[:50] }}</h6>
+                            <div class="price mb-2">
+                                {% if product.discount_percent > 0 %}
+                                <span class="text-muted text-decoration-line-through">₦{{ "%.2f"|format(product.price) }}</span>
+                                <span class="text-danger fw-bold ms-2">₦{{ "%.2f"|format(product.final_price) }}</span>
+                                {% else %}
+                                <span class="text-primary fw-bold">₦{{ "%.2f"|format(product.price) }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="rating mb-2">
+                                {% for i in range(5) %}
+                                    {% if i < product.rating|int %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                    <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="small">({{ product.rating_count }})</span>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="post">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn btn-primary w-100">Add to Cart</button>
+                                </form>
+                                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-outline-secondary">View Details</a>
+                                <a href="{{ url_for('add_to_wishlist', product_id=product.id) }}" class="btn btn-outline-danger">Add to Wishlist</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        No products found. Please try different filters.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

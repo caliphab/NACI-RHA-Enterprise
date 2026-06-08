@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-{% if title == 'Add Product' %}plus{% else %}edit{% endif %}"></i> 
+                        {{ title }}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <h5 class="mb-3"><i class="fas fa-info-circle"></i> Basic Information</h5>
+                        <hr>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="name" class="form-label">Product Name *</label>
+                                {{ form.name(class="form-control", placeholder="Enter product name", required=true) }}
+                                {% if form.name.errors %}
+                                    {% for error in form.name.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description *</label>
+                            {{ form.description(class="form-control", rows="5", placeholder="Detailed product description", required=true) }}
+                            {% if form.description.errors %}
+                                {% for error in form.description.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="mb-3 mt-4"><i class="fas fa-tag"></i> Pricing Information</h5>
+                        <hr>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="price" class="form-label">Selling Price (₦) *</label>
+                                {{ form.price(class="form-control", step="0.01", placeholder="0.00", required=true) }}
+                                {% if form.price.errors %}
+                                    {% for error in form.price.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="compare_price" class="form-label">Compare at Price (₦)</label>
+                                {{ form.compare_price(class="form-control", step="0.01", placeholder="0.00") }}
+                                <small class="text-muted">Original price to show discount (leave empty if no discount)</small>
+                                {% if form.compare_price.errors %}
+                                    {% for error in form.compare_price.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="discount_percent" class="form-label">Discount Percentage (%)</label>
+                                {{ form.discount_percent(class="form-control", placeholder="0", readonly=true) }}
+                                <small class="text-muted">Auto-calculated from Compare Price</small>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3 mt-4"><i class="fas fa-boxes"></i> Inventory Information</h5>
+                        <hr>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="stock" class="form-label">Stock Quantity *</label>
+                                {{ form.stock(class="form-control", placeholder="Number of items", required=true) }}
+                                {% if form.stock.errors %}
+                                    {% for error in form.stock.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="sku" class="form-label">SKU (Stock Keeping Unit) *</label>
+                                {{ form.sku(class="form-control", placeholder="Unique product code", required=true) }}
+                                <small class="text-muted">Example: PRD-001, IPHONE-13-128</small>
+                                {% if form.sku.errors %}
+                                    {% for error in form.sku.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="brand" class="form-label">Brand</label>
+                                {{ form.brand(class="form-control", placeholder="Brand name") }}
+                                {% if form.brand.errors %}
+                                    {% for error in form.brand.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3 mt-4"><i class="fas fa-tags"></i> Category & Features</h5>
+                        <hr>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="category_id" class="form-label">Category *</label>
+                                {{ form.category_id(class="form-select", required=true) }}
+                                {% if form.category_id.errors %}
+                                    {% for error in form.category_id.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Product Flags</label>
+                            <div class="form-check">
+                                {{ form.is_featured(class="form-check-input") }}
+                                <label class="form-check-label" for="is_featured">
+                                    Featured Product <small class="text-muted">(Display on homepage featured section)</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                {{ form.is_bestseller(class="form-check-input") }}
+                                <label class="form-check-label" for="is_bestseller">
+                                    Best Seller <small class="text-muted">(Mark as top selling product)</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3 mt-4"><i class="fas fa-images"></i> Product Images</h5>
+                        <hr>
+                        
+                        <div class="mb-3">
+                            <label for="images" class="form-label">Upload Images</label>
+                            {{ form.images(class="form-control", accept="image/*", multiple=true) }}
+                            <small class="text-muted">
+                                You can select multiple images (JPG, JPEG, PNG, GIF). 
+                                The first image will be the main product image.
+                                Max file size: 16MB per image.
+                            </small>
+                            {% if form.images.errors %}
+                                {% for error in form.images.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div id="imagePreview" class="row g-2 mb-3"></div>
+                        
+                        <hr class="mt-4">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_products') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('price')?.addEventListener('input', calculateDiscount);
+document.getElementById('compare_price')?.addEventListener('input', calculateDiscount);
+
+function calculateDiscount() {
+    const price = parseFloat(document.getElementById('price')?.value) || 0;
+    const comparePrice = parseFloat(document.getElementById('compare_price')?.value) || 0;
+    const discountField = document.getElementById('discount_percent');
+    
+    if (discountField && comparePrice > price && price > 0) {
+        const discount = Math.round(((comparePrice - price) / comparePrice) * 100);
+        discountField.value = discount;
+        discountField.readOnly = true;
+    } else if (discountField) {
+        discountField.value = 0;
+        discountField.readOnly = false;
+    }
+}
+
+document.getElementById('images')?.addEventListener('change', function(e) {
+    const previewContainer = document.getElementById('imagePreview');
+    previewContainer.innerHTML = '';
+    
+    const files = Array.from(e.target.files);
+    
+    files.forEach((file, index) => {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 col-sm-4 col-6';
+                col.innerHTML = `
+                    <div class="position-relative">
+                        <img src="${e.target.result}" class="img-fluid rounded border" style="height: 150px; width: 100%; object-fit: cover;">
+                        <span class="badge bg-primary position-absolute top-0 start-0 m-1">${index === 0 ? 'Main' : index + 1}</span>
+                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1" onclick="removeImage(this, '${file.name}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                previewContainer.appendChild(col);
+            };
+            
+            reader.readAsDataURL(file);
+        }
+    });
+});
+
+function removeImage(button, filename) {
+    button.closest('.col-md-3').remove();
+    
+    showToast('Image will be removed when you save the product', 'info');
+}
+
+document.querySelector('form').addEventListener('submit', function(e) {
+    const stock = document.getElementById('stock').value;
+    const price = document.getElementById('price').value;
+    const name = document.getElementById('name').value;
+    
+    if (!name.trim()) {
+        e.preventDefault();
+        showToast('Please enter product name', 'danger');
+        return false;
+    }
+    
+    if (!price || parseFloat(price) <= 0) {
+        e.preventDefault();
+        showToast('Please enter a valid price', 'danger');
+        return false;
+    }
+    
+    if (!stock || parseInt(stock) < 0) {
+        e.preventDefault();
+        showToast('Please enter valid stock quantity', 'danger');
+        return false;
+    }
+    
+    return true;
+});
+
+function showToast(message, type) {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toastElement = document.createElement('div');
+    toastElement.innerHTML = toastHtml;
+    toastContainer.appendChild(toastElement);
+    
+    const toast = new bootstrap.Toast(toastElement.firstChild);
+    toast.show();
+    
+    setTimeout(() => {
+        toastElement.remove();
+    }, 3000);
+}
+</script>
+
+<style>
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+#imagePreview {
+    min-height: 150px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background: #f9f9f9;
+}
+
+#imagePreview .position-relative {
+    transition: transform 0.2s;
+}
+
+#imagePreview .position-relative:hover {
+    transform: scale(1.02);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46a0 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+hr {
+    margin: 15px 0;
+    border-top: 2px solid #eee;
+}
+</style>
+{% endblock %}

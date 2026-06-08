@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2>Welcome, {{ current_user.full_name }}!</h2>
+    
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="#orders" class="list-group-item list-group-item-action active" data-bs-toggle="list">My Orders</a>
+                <a href="#wishlist" class="list-group-item list-group-item-action" data-bs-toggle="list">Wishlist</a>
+                <a href="#profile" class="list-group-item list-group-item-action" data-bs-toggle="list">Profile Settings</a>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="orders">
+                    <h4>My Orders</h4>
+                    {% if orders %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td>{{ order.order_number }}</td>
+                                    <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>₦{{ "%.2f"|format(order.grand_total) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ order.status_badge }}">{{ order.status|title }}</span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('track_order', order_number=order.order_number) }}" class="btn btn-sm btn-info">Track</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p>No orders yet.</p>
+                    {% endif %}
+                </div>
+                
+                <div class="tab-pane fade" id="wishlist">
+                    <h4>My Wishlist</h4>
+                    <div class="row g-4">
+                        {% for item in wishlist_items %}
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6>{{ item.product.name[:40] }}</h6>
+                                    <p class="text-primary">₦{{ "%.2f"|format(item.product.price) }}</p>
+                                    <form action="{{ url_for('add_to_cart', product_id=item.product.id) }}" method="post">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-sm btn-primary">Add to Cart</button>
+                                    </form>
+                                    <a href="{{ url_for('remove_from_wishlist', product_id=item.product.id) }}" class="btn btn-sm btn-danger mt-2">Remove</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p>Your wishlist is empty.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="profile">
+                    <h4>Profile Settings</h4>
+                    <form method="post" action="{{ url_for('update_profile') }}">
+                        <div class="mb-3">
+                            <label>Full Name</label>
+                            <input type="text" name="full_name" class="form-control" value="{{ current_user.full_name }}">
+                        </div>
+                        <div class="mb-3">
+                            <label>Phone</label>
+                            <input type="text" name="phone" class="form-control" value="{{ current_user.phone }}">
+                        </div>
+                        <div class="mb-3">
+                            <label>Address</label>
+                            <textarea name="address" class="form-control">{{ current_user.address or '' }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label>City</label>
+                            <input type="text" name="city" class="form-control" value="{{ current_user.city or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label>State</label>
+                            <input type="text" name="state" class="form-control" value="{{ current_user.state or '' }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

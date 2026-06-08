@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="text-center mb-4">Contact Us</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4>Send us a Message</h4>
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.phone.label(class="form-label") }}
+                            {{ form.phone(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.message.label(class="form-label") }}
+                            {{ form.message(class="form-control", rows="5") }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4>Contact Information</h4>
+                    <hr>
+                    <p><i class="fas fa-phone text-primary"></i> <strong>Phone:</strong> +234 800 000 0000</p>
+                    <p><i class="fab fa-whatsapp text-success"></i> <strong>WhatsApp:</strong> +234 800 000 0000</p>
+                    <p><i class="fas fa-envelope text-danger"></i> <strong>Email:</strong> info@nac-heerah.com</p>
+                    <p><i class="fas fa-map-marker-alt text-info"></i> <strong>Address:</strong> Lagos, Nigeria</p>
+                    
+                    <hr>
+                    <h5>Business Hours</h5>
+                    <p>Monday - Friday: 9:00 AM - 6:00 PM<br>
+                    Saturday: 10:00 AM - 4:00 PM<br>
+                    Sunday: Closed</p>
+                    
+                    <h5>Follow Us</h5>
+                    <div class="social-links">
+                        <a href="#" class="btn btn-outline-primary me-2"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="btn btn-outline-info me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="btn btn-outline-danger me-2"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="btn btn-outline-success"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
