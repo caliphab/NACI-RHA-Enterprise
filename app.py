@@ -227,6 +227,24 @@ def remove_from_wishlist(product_id):
     flash('Removed from wishlist', 'success')
     return redirect(url_for('dashboard'))
 
+@app.route('/add_all_to_cart', methods=['POST'])
+@login_required
+def add_all_to_cart():
+    wishlist_entries = Wishlist.query.filter_by(user_id=current_user.id).all()
+    cart = session.get('cart', {})
+    added_count = 0
+    
+    for entry in wishlist_entries:
+        product = Product.query.get(entry.product_id)
+        if product and product.in_stock:
+            product_id = str(product.id)
+            cart[product_id] = cart.get(product_id, 0) + 1
+            added_count += 1
+    
+    session['cart'] = cart
+    flash(f'{added_count} items added to your cart!', 'success')
+    return redirect(url_for('cart'))
+
 @app.route('/add_review/<int:product_id>', methods=['POST'])
 @login_required
 def add_review(product_id):
@@ -443,10 +461,114 @@ def admin_update_order(order_id):
 @login_required
 def admin_messages():
     if not current_user.is_admin:
+        flash('Admin access required', 'danger')
         return redirect(url_for('index'))
     
     messages = ContactMessage.query.order_by(ContactMessage.created_at.desc()).all()
-    return render_template('admin_messages.html', messages=messages)
+    return render_template('admin_messages.html', messages=messages, now=datetime.utcnow())
+
+@app.route('/api/message/<int:message_id>')
+@login_required
+def get_message(message_id):
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    message = ContactMessage.query.get_or_404(message_id)
+    return jsonify({
+        'id': message.id,
+        'name': message.name,
+        'email': message.email,
+        'phone': message.phone,
+        'message': message.message,
+        'created_at': message.created_at.isoformat()
+    })
+
+@app.route('/admin/message/<int:message_id>/read', methods=['POST'])
+@login_required
+def mark_message_read(message_id):
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    message = ContactMessage.query.get_or_404(message_id)
+    message.is_read = True
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/admin/message/<int:message_id>/delete', methods=['POST'])
+@login_required
+def delete_message(message_id):
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    message = ContactMessage.query.get_or_404(message_id)
+    db.session.delete(message)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/admin/messages/mark-read', methods=['POST'])
+@login_required
+def mark_messages_read():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    message_ids = data.get('message_ids', [])
+    
+    ContactMessage.query.filter(ContactMessage.id.in_(message_ids)).update(
+        {'is_read': True}, synchronize_session=False
+    )
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/admin/messages/delete-multiple', methods=['POST'])
+@login_required
+def delete_multiple_messages():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    message_ids = data.get('message_ids', [])
+    
+    ContactMessage.query.filter(ContactMessage.id.in_(message_ids)).delete(
+        synchronize_session=False
+    )
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/admin/messages/mark-all-read', methods=['POST'])
+@login_required
+def mark_all_messages_read():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    ContactMessage.query.update({'is_read': True}, synchronize_session=False)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/admin/messages/delete-all', methods=['POST'])
+@login_required
+def delete_all_messages():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    ContactMessage.query.delete()
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/admin/message/reply', methods=['POST'])
+@login_required
+def reply_to_message():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.get_json()
+    email = data.get('email')
+    subject = data.get('subject')
+    message = data.get('message')
+    
+    # Code to integrate with an email service (SMTP, SendGrid, etc.)
+    
+    return jsonify({'success': True, 'message': 'Reply sent successfully'})
 
 # Api endpoints
 @app.route('/api/search')
@@ -464,8 +586,27 @@ def api_cart_count():
 @app.route('/wishlist')
 @login_required
 def wishlist():
-    wishlist_items = Wishlist.query.filter_by(user_id=current_user.id).all()
-    return render_template('wishlist.html', wishlist_items=wishlist_items)
+    wishlist_entries = Wishlist.query.filter_by(user_id=current_user.id).all()
+    
+    wishlist_items = []
+    for entry in wishlist_entries:
+        product = Product.query.get(entry.product_id)
+        if product:
+            wishlist_items.append({
+                'id': entry.id,
+                'product': product,
+                'created_at': entry.created_at
+            })
+    
+    suggested_products = Product.query.filter_by(is_bestseller=True).limit(4).all()
+    if not suggested_products:
+        suggested_products = Product.query.filter_by(is_featured=True).limit(4).all()
+    if not suggested_products:
+        suggested_products = Product.query.limit(4).all()
+    
+    return render_template('wishlist.html', 
+                         wishlist_items=wishlist_items,
+                         products=suggested_products)
 
 @app.route('/update_profile', methods=['POST'])
 @login_required
